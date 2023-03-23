@@ -34,6 +34,7 @@ module Main =
                                 ComboBox.verticalAlignment VerticalAlignment.Center
                                 ComboBox.dock Dock.Left
                                 ComboBox.width 250
+                                ComboBox.selectedIndex 0
                                 ComboBox.dataItems [
                                     "Europe (Ireland) eu-west-1"
                                     "Europe (London) eu-west-2"
@@ -54,33 +55,78 @@ module Main =
                             ]
                         ]
                     ]
-                    // TODO - Vertical GridSplitter for Request/Response
-                    DockPanel.create [
-                        DockPanel.dock Dock.Bottom
-                        DockPanel.children [
-                            Button.create [
-                                Button.dock Dock.Bottom
-                                Button.onClick (fun _ -> state.Set(state.Current - 1))
-                                Button.content "-"
-                                Button.horizontalAlignment HorizontalAlignment.Stretch
-                                Button.horizontalContentAlignment HorizontalAlignment.Center
+                    Grid.create [
+                        Grid.dock Dock.Bottom
+                        Grid.rowDefinitions (RowDefinitions "*,4,*")
+                        Grid.children [
+                            DockPanel.create [
+                                DockPanel.row 0
+                                DockPanel.minHeight 100
+                                DockPanel.children [
+                                    TextBlock.create [
+                                        TextBlock.margin (Thickness(10))
+                                        TextBlock.verticalAlignment VerticalAlignment.Top
+                                        TextBlock.textAlignment TextAlignment.Right
+                                        TextBlock.dock Dock.Left
+                                        TextBlock.width 70
+                                        TextBlock.text "Request:"
+                                    ]
+                                    TextBox.create [
+                                        TextBlock.margin (Thickness(10))
+                                        TextBox.text ""
+                                    ]
+                                ]
                             ]
-                            Button.create [
-                                Button.dock Dock.Bottom
-                                Button.onClick (fun _ -> state.Set(state.Current + 1))
-                                Button.content "+"
-                                Button.horizontalAlignment HorizontalAlignment.Stretch
-                                Button.horizontalContentAlignment HorizontalAlignment.Center
+                            GridSplitter.create [
+                                GridSplitter.row 1
+                                GridSplitter.background "black"
                             ]
-                            TextBlock.create [
-                                TextBlock.dock Dock.Top
-                                TextBlock.fontSize 48.0
-                                TextBlock.verticalAlignment VerticalAlignment.Center
-                                TextBlock.horizontalAlignment HorizontalAlignment.Center
-                                TextBlock.text (string state.Current)
+                            DockPanel.create [
+                                DockPanel.row 2
+                                DockPanel.minHeight 100
+                                DockPanel.children [
+                                    TextBlock.create [
+                                        TextBlock.margin (Thickness(10))
+                                        TextBlock.verticalAlignment VerticalAlignment.Top
+                                        TextBlock.textAlignment TextAlignment.Right
+                                        TextBlock.dock Dock.Left
+                                        TextBlock.width 70
+                                        TextBlock.text "Response:"
+                                    ]
+                                    TextBox.create [
+                                        TextBlock.margin (Thickness(10))
+                                        TextBox.text ""
+                                    ]
+                                ]
                             ]
                         ]
                     ]
+                    //DockPanel.create [
+                    //    DockPanel.dock Dock.Bottom
+                    //    DockPanel.children [
+                    //        Button.create [
+                    //            Button.dock Dock.Bottom
+                    //            Button.onClick (fun _ -> state.Set(state.Current - 1))
+                    //            Button.content "-"
+                    //            Button.horizontalAlignment HorizontalAlignment.Stretch
+                    //            Button.horizontalContentAlignment HorizontalAlignment.Center
+                    //        ]
+                    //        Button.create [
+                    //            Button.dock Dock.Bottom
+                    //            Button.onClick (fun _ -> state.Set(state.Current + 1))
+                    //            Button.content "+"
+                    //            Button.horizontalAlignment HorizontalAlignment.Stretch
+                    //            Button.horizontalContentAlignment HorizontalAlignment.Center
+                    //        ]
+                    //        TextBlock.create [
+                    //            TextBlock.dock Dock.Top
+                    //            TextBlock.fontSize 48.0
+                    //            TextBlock.verticalAlignment VerticalAlignment.Center
+                    //            TextBlock.horizontalAlignment HorizontalAlignment.Center
+                    //            TextBlock.text (string state.Current)
+                    //        ]
+                    //    ]
+                    //]
                 ]
             ]
         )
