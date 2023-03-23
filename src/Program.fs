@@ -10,6 +10,21 @@ open Avalonia.FuncUI
 open Avalonia.FuncUI.DSL
 open Avalonia.Layout
 
+type AwsRegion =
+    | EuWest1
+    | EuWest2
+
+module AwsRegion =
+    let regionDescription = function
+        | EuWest1 -> "Europe (Ireland)"
+        | EuWest2 -> "Europe (London)"
+
+    let regionCode = function
+        | EuWest1 -> "eu-west-1"
+        | EuWest2 -> "eu-west-2"
+
+    let all = [ EuWest1; EuWest2 ]
+
 module Main =
 
     let view () =
@@ -22,7 +37,7 @@ module Main =
                         DockPanel.dock Dock.Top
                         DockPanel.children [
                             TextBlock.create [
-                                TextBlock.margin (Thickness(10))
+                                TextBlock.margin (30, 10, 10, 10)
                                 TextBlock.verticalAlignment VerticalAlignment.Center
                                 TextBlock.textAlignment TextAlignment.Right
                                 TextBlock.dock Dock.Left
@@ -34,11 +49,25 @@ module Main =
                                 ComboBox.verticalAlignment VerticalAlignment.Center
                                 ComboBox.dock Dock.Left
                                 ComboBox.width 250
-                                ComboBox.selectedIndex 0
-                                ComboBox.dataItems [
-                                    "Europe (Ireland) eu-west-1"
-                                    "Europe (London) eu-west-2"
-                                ]
+                                ComboBox.dataItems AwsRegion.all
+                                ComboBox.selectedItem AwsRegion.EuWest1
+                                ComboBox.itemTemplate (
+                                    DataTemplateView.create<_, _>(fun (region: AwsRegion) ->
+                                        DockPanel.create [
+                                            DockPanel.children [
+                                                TextBlock.create [
+                                                    TextBlock.dock Dock.Left
+                                                    TextBlock.text $"{AwsRegion.regionDescription region}"
+                                                ]
+                                                TextBlock.create [
+                                                    TextBlock.dock Dock.Right
+                                                    TextBlock.textAlignment TextAlignment.Right
+                                                    TextBlock.foreground "#999999"
+                                                    TextBlock.text $"{AwsRegion.regionCode region}"
+                                                ]
+                                            ]
+                                        ]
+                                    ))
                             ]
                             TextBlock.create [
                                 TextBlock.margin (Thickness(10))
@@ -47,6 +76,13 @@ module Main =
                                 TextBlock.dock Dock.Left
                                 TextBlock.width 70
                                 TextBlock.text "Lambda:"
+                            ]
+                            Button.create [
+                                Button.margin (Thickness(10))
+                                Button.verticalAlignment VerticalAlignment.Center
+                                Button.dock Dock.Right
+                                Button.width 60
+                                Button.content "Send"
                             ]
                             TextBox.create [
                                 TextBox.margin (Thickness(10))
@@ -144,7 +180,7 @@ type App() =
 
     override this.Initialize() =
         this.Styles.Add (FluentTheme())
-        this.RequestedThemeVariant <- Styling.ThemeVariant.Default
+        this.RequestedThemeVariant <- Styling.ThemeVariant.Dark
 
     override this.OnFrameworkInitializationCompleted() =
         match this.ApplicationLifetime with
