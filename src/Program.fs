@@ -1,4 +1,4 @@
-namespace Avaloniaui.Demo.Program
+namespace Direktiv.Program
 
 open Avalonia
 open Avalonia.Controls.ApplicationLifetimes
@@ -9,21 +9,9 @@ open Avalonia.Controls
 open Avalonia.FuncUI
 open Avalonia.FuncUI.DSL
 open Avalonia.Layout
+open Avalonia.Threading
 
-type AwsRegion =
-    | EuWest1
-    | EuWest2
-
-module AwsRegion =
-    let regionDescription = function
-        | EuWest1 -> "Europe (Ireland)"
-        | EuWest2 -> "Europe (London)"
-
-    let regionCode = function
-        | EuWest1 -> "eu-west-1"
-        | EuWest2 -> "eu-west-2"
-
-    let all = [ EuWest1; EuWest2 ]
+open Direktiv
 
 type MainState =
     { Region : AwsRegion
@@ -73,13 +61,13 @@ module Main =
                                             DockPanel.children [
                                                 TextBlock.create [
                                                     TextBlock.dock Dock.Left
-                                                    TextBlock.text $"{AwsRegion.regionDescription region}"
+                                                    TextBlock.text $"{AwsRegion.description region}"
                                                 ]
                                                 TextBlock.create [
                                                     TextBlock.dock Dock.Right
                                                     TextBlock.textAlignment TextAlignment.Right
                                                     TextBlock.foreground "#999999"
-                                                    TextBlock.text $"{AwsRegion.regionCode region}"
+                                                    TextBlock.text $"{AwsRegion.systemName region}"
                                                 ]
                                             ]
                                         ]
@@ -99,6 +87,13 @@ module Main =
                                 Button.dock Dock.Right
                                 Button.width 60
                                 Button.content "Send"
+                                Button.onClick (fun _ ->
+                                    let x = state.Current
+                                    async {
+                                        let! response = AWS.invoke x.Region x.LambdaName x.Request
+                                        state.Set({ state.Current with Response = response})
+                                    } |> Async.Start
+                                    ())
                             ]
                             TextBox.create [
                                 TextBox.name "LambdaInput"

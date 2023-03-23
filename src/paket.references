@@ -2,6 +2,11 @@ Expecto
 FSharp.Core
 FSharp.Data
 FSharp.SystemTextJson
+AWSSDK.Core
+AWSSDK.Lambda
+AWSSDK.KeyManagementService
+AWSSDK.SecurityToken
+AWSSDK.SimpleNotificationService
 Avalonia.Desktop
 Avalonia.Themes.Fluent
 Avalonia.FuncUI

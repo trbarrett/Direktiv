@@ -3,6 +3,11 @@ source https://api.nuget.org/v3/index.json
 nuget Avalonia.Desktop 11.0.0-preview5 preview
 nuget Avalonia.FuncUI 0.6.0-preview9 preview
 nuget Avalonia.Themes.Fluent 11.0.0-preview5 preview
+nuget AWSSDK.Core
+nuget AWSSDK.Lambda
+nuget AWSSDK.KeyManagementService
+nuget AWSSDK.SecurityToken
+nuget AWSSDK.SimpleNotificationService
 nuget Expecto
 nuget FSharp.Core
 nuget FSharp.Data

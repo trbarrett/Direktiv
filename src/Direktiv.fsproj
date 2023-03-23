@@ -9,6 +9,8 @@
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="paket.references" />
+    <Compile Include="AwsRegion.fs" />
+    <Compile Include="AWS.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
