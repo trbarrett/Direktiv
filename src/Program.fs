@@ -25,11 +25,24 @@ module AwsRegion =
 
     let all = [ EuWest1; EuWest2 ]
 
+type MainState =
+    { Region : AwsRegion
+      LambdaName : string
+      Request : string
+      Response : string }
+
+module MainState =
+    let initial =
+        { Region = EuWest1
+          LambdaName = ""
+          Request = ""
+          Response = "" }
+
 module Main =
 
     let view () =
         Component(fun ctx ->
-            let state = ctx.useState 0
+            let state = ctx.useState MainState.initial
 
             DockPanel.create [
                 DockPanel.children [
@@ -51,6 +64,9 @@ module Main =
                                 ComboBox.width 250
                                 ComboBox.dataItems AwsRegion.all
                                 ComboBox.selectedItem AwsRegion.EuWest1
+                                ComboBox.onSelectedItemChanged (function
+                                    | :? AwsRegion as region -> state.Set({ state.Current with Region = region})
+                                    | unknown -> eprintf $"Can't cast %A{unknown} to AwsRegion")
                                 ComboBox.itemTemplate (
                                     DataTemplateView.create<_, _>(fun (region: AwsRegion) ->
                                         DockPanel.create [
@@ -85,9 +101,12 @@ module Main =
                                 Button.content "Send"
                             ]
                             TextBox.create [
+                                TextBox.name "LambdaInput"
                                 TextBox.margin (Thickness(10))
                                 TextBox.verticalAlignment VerticalAlignment.Center
                                 TextBox.dock Dock.Right
+                                TextBox.onTextChanged (fun text ->
+                                    state.Set({ state.Current with LambdaName = text }))
                             ]
                         ]
                     ]
@@ -108,8 +127,11 @@ module Main =
                                         TextBlock.text "Request:"
                                     ]
                                     TextBox.create [
-                                        TextBlock.margin (Thickness(10))
-                                        TextBox.text ""
+                                        TextBox.name "RegionInput"
+                                        TextBox.margin (Thickness(10))
+                                        TextBox.text state.Current.Request
+                                        TextBox.onTextChanged (fun text ->
+                                            state.Set({ state.Current with Request = text }))
                                     ]
                                 ]
                             ]
@@ -130,8 +152,10 @@ module Main =
                                         TextBlock.text "Response:"
                                     ]
                                     TextBox.create [
-                                        TextBlock.margin (Thickness(10))
-                                        TextBox.text ""
+                                        TextBox.margin (Thickness(10))
+                                        TextBox.text state.Current.Response
+                                        TextBox.onTextChanged (fun text ->
+                                            state.Set({ state.Current with Response = text }))
                                     ]
                                 ]
                             ]
