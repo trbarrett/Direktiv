@@ -11,17 +11,21 @@ open Avalonia.FuncUI.DSL
 open Avalonia.Layout
 open Avalonia.Threading
 
+open Amazon.Runtime.CredentialManagement
+
 open Direktiv
 
 type MainState =
-    { Region : AwsRegion
+    { AwsProfile : CredentialProfile
+      Region : AwsRegion
       LambdaName : string
       Request : string
       Response : string }
 
 module MainState =
-    let initial =
-        { Region = EuWest1
+    let initial (profile : CredentialProfile) =
+        { AwsProfile = profile
+          Region = AwsRegion.fromRegionEndpoint profile.Region
           LambdaName = ""
           Request = ""
           Response = "" }
@@ -30,10 +34,58 @@ module Main =
 
     let view () =
         Component(fun ctx ->
-            let state = ctx.useState MainState.initial
+            let profileOptions = AWS.loadProfiles ()
+            let state = ctx.useState (MainState.initial (List.head profileOptions))
 
             DockPanel.create [
                 DockPanel.children [
+                    DockPanel.create [
+                        DockPanel.dock Dock.Top
+                        DockPanel.background "#212121"
+                        DockPanel.children [
+                            TextBlock.create [
+                                TextBlock.margin (30, 10, 10, 0)
+                                TextBlock.verticalAlignment VerticalAlignment.Center
+                                TextBlock.textAlignment TextAlignment.Right
+                                TextBlock.dock Dock.Left
+                                TextBlock.width 50
+                                TextBlock.text "Profile:"
+                            ]
+                            ComboBox.create [
+                                ComboBox.margin (10, 10, 10, 0)
+                                ComboBox.verticalAlignment VerticalAlignment.Center
+                                ComboBox.dock Dock.Left
+                                ComboBox.width 250
+                                ComboBox.dataItems profileOptions
+                                ComboBox.selectedItem state.Current.AwsProfile
+                                ComboBox.onSelectedItemChanged (function
+                                    | :? CredentialProfile as profile ->
+                                        state.Set(
+                                            { state.Current with
+                                                AwsProfile = profile
+                                                Region = AwsRegion.fromRegionEndpoint profile.Region })
+                                    | unknown -> eprintf $"Can't cast %A{unknown} to CredentialProfile")
+                                ComboBox.itemTemplate (
+                                    DataTemplateView.create<_, _>(fun (profile: CredentialProfile) ->
+                                        DockPanel.create [
+                                            DockPanel.children [
+                                                TextBlock.create [
+                                                    TextBlock.dock Dock.Left
+                                                    TextBlock.text $"{profile.Name}"
+                                                ]
+                                                TextBlock.create [
+                                                    TextBlock.dock Dock.Right
+                                                    TextBlock.textAlignment TextAlignment.Right
+                                                    TextBlock.foreground "#999999"
+                                                    TextBlock.fontStyle FontStyle.Italic
+                                                    TextBlock.text $"{profile.CredentialDescription}"
+                                                ]
+                                            ]
+                                        ]
+                                    ))
+                            ]
+                        ]
+                    ]
                     DockPanel.create [
                         DockPanel.dock Dock.Top
                         DockPanel.background "#212121"
@@ -52,9 +104,10 @@ module Main =
                                 ComboBox.dock Dock.Left
                                 ComboBox.width 250
                                 ComboBox.dataItems AwsRegion.all
-                                ComboBox.selectedItem AwsRegion.EuWest1
+                                ComboBox.selectedItem state.Current.Region
                                 ComboBox.onSelectedItemChanged (function
-                                    | :? AwsRegion as region -> state.Set({ state.Current with Region = region})
+                                    | :? AwsRegion as region ->
+                                        state.Set({ state.Current with Region = region})
                                     | unknown -> eprintf $"Can't cast %A{unknown} to AwsRegion")
                                 ComboBox.itemTemplate (
                                     DataTemplateView.create<_, _>(fun (region: AwsRegion) ->
@@ -93,7 +146,12 @@ module Main =
                                 Button.onClick (fun _ ->
                                     let x = state.Current
                                     async {
-                                        let! response = AWS.invoke x.Region x.LambdaName x.Request
+                                        let! response =
+                                            AWS.invoke
+                                                x.AwsProfile.Name
+                                                x.Region
+                                                x.LambdaName
+                                                x.Request
                                         state.Set({ state.Current with Response = response})
                                     } |> Async.Start
                                     ())
