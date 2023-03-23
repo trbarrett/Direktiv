@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "devDependencies": {
+    "@totallymoney/github-serverless-dotnet-artifacts": "^3.1.0",
+    "serverless": "^3.24.1"
+  },
+  "scripts": {
+    "preinstall": "dotnet tool restore",
+    "prebuild": "dotnet paket restore",
+    "build": "dotnet build && dotnet fantomas -r .",
+    "test": "dotnet run --project tests",
+    "publish": "gsda-publish mediaingenuity/OpenBanking.Bud.TestCases src",
+    "deploy": "gsda-deploy mediaingenuity/OpenBanking.Bud.TestCases",
+    "pick": "gsda-pick -e stage"
+  }
+}
