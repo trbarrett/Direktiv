@@ -36,9 +36,10 @@ module Main =
                 DockPanel.children [
                     DockPanel.create [
                         DockPanel.dock Dock.Top
+                        DockPanel.background "#212121"
                         DockPanel.children [
                             TextBlock.create [
-                                TextBlock.margin (30, 10, 10, 10)
+                                TextBlock.margin (30, 10, 10, 0)
                                 TextBlock.verticalAlignment VerticalAlignment.Center
                                 TextBlock.textAlignment TextAlignment.Right
                                 TextBlock.dock Dock.Left
@@ -46,7 +47,7 @@ module Main =
                                 TextBlock.text "Region:"
                             ]
                             ComboBox.create [
-                                ComboBox.margin (Thickness(10))
+                                ComboBox.margin (10, 10, 10, 0)
                                 ComboBox.verticalAlignment VerticalAlignment.Center
                                 ComboBox.dock Dock.Left
                                 ComboBox.width 250
@@ -67,6 +68,7 @@ module Main =
                                                     TextBlock.dock Dock.Right
                                                     TextBlock.textAlignment TextAlignment.Right
                                                     TextBlock.foreground "#999999"
+                                                    TextBlock.fontStyle FontStyle.Italic
                                                     TextBlock.text $"{AwsRegion.systemName region}"
                                                 ]
                                             ]
@@ -74,7 +76,7 @@ module Main =
                                     ))
                             ]
                             TextBlock.create [
-                                TextBlock.margin (Thickness(10))
+                                TextBlock.margin (10, 10, 10, 0)
                                 TextBlock.verticalAlignment VerticalAlignment.Center
                                 TextBlock.textAlignment TextAlignment.Right
                                 TextBlock.dock Dock.Left
@@ -82,10 +84,11 @@ module Main =
                                 TextBlock.text "Lambda:"
                             ]
                             Button.create [
-                                Button.margin (Thickness(10))
+                                Button.margin (10, 10, 10, 0)
                                 Button.verticalAlignment VerticalAlignment.Center
                                 Button.dock Dock.Right
                                 Button.width 60
+                                Button.fontWeight FontWeight.Bold
                                 Button.content "Send"
                                 Button.onClick (fun _ ->
                                     let x = state.Current
@@ -97,7 +100,7 @@ module Main =
                             ]
                             TextBox.create [
                                 TextBox.name "LambdaInput"
-                                TextBox.margin (Thickness(10))
+                                TextBox.margin (10 ,10 ,10 ,0)
                                 TextBox.verticalAlignment VerticalAlignment.Center
                                 TextBox.dock Dock.Right
                                 TextBox.onTextChanged (fun text ->
@@ -107,11 +110,12 @@ module Main =
                     ]
                     Grid.create [
                         Grid.dock Dock.Bottom
-                        Grid.rowDefinitions (RowDefinitions "*,4,*")
+                        Grid.rowDefinitions (RowDefinitions "*,1,*")
                         Grid.children [
                             DockPanel.create [
                                 DockPanel.row 0
                                 DockPanel.minHeight 100
+                                DockPanel.background "#212121"
                                 DockPanel.children [
                                     TextBlock.create [
                                         TextBlock.margin (Thickness(10))
@@ -132,7 +136,9 @@ module Main =
                             ]
                             GridSplitter.create [
                                 GridSplitter.row 1
-                                GridSplitter.background "black"
+                                GridSplitter.padding 0
+                                GridSplitter.maxHeight 1
+                                GridSplitter.background "#272727"
                             ]
                             DockPanel.create [
                                 DockPanel.row 2
