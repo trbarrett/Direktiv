@@ -39,23 +39,26 @@ let tryPrettyPrintJson str =
 let invoke (profileName : string) (region : AwsRegion) functionName requestBody = async {
     printfn "Starting Lambda Request"
     let sw = System.Diagnostics.Stopwatch.StartNew()
-    let region = RegionEndpoint.GetBySystemName (AwsRegion.systemName region)
-    use client = new AmazonLambdaClient(getCredentials profileName, region)
-    let! response =
-        InvokeRequest(
-            FunctionName = functionName, Payload = requestBody, InvocationType = InvocationType.RequestResponse)
-        |> client.InvokeAsync
-        |> Async.AwaitTask
+    try
+        let region = RegionEndpoint.GetBySystemName (AwsRegion.systemName region)
+        use client = new AmazonLambdaClient(getCredentials profileName, region)
+        let! response =
+            InvokeRequest(
+                FunctionName = functionName, Payload = requestBody, InvocationType = InvocationType.RequestResponse)
+            |> client.InvokeAsync
+            |> Async.AwaitTask
 
-    sw.Stop()
+        sw.Stop()
 
-    let responseText =
-        response.Payload.ToArray()
-        |> System.Text.Encoding.UTF8.GetString
-        |> tryPrettyPrintJson
+        let responseText =
+            response.Payload.ToArray()
+            |> System.Text.Encoding.UTF8.GetString
+            |> tryPrettyPrintJson
 
-    printfn $"Got Response Text. Took {sw.ElapsedMilliseconds}ms"
-    printfn $"{responseText}"
+        printfn $"Got Response Text. Took {sw.ElapsedMilliseconds}ms"
+        printfn $"{responseText}"
 
-    return responseText, sw.Elapsed
+        return responseText, sw.Elapsed
+    with ex ->
+        return $"ERROR: {ex.Message}", sw.Elapsed
 }

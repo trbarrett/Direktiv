@@ -1,6 +1,9 @@
 namespace Direktiv.Program
 
 open System
+open System.Timers
+open System.Diagnostics
+
 open Avalonia
 open Avalonia.Controls.ApplicationLifetimes
 open Avalonia.Media
@@ -24,6 +27,10 @@ type MainState =
       RequestTime : TimeSpan option
       Response : string }
 
+
+type RequestTimer = { Time : TimeSpan
+                      Running : bool }
+
 module MainState =
     let initial (profile : CredentialProfile) =
         { AwsProfile = profile
@@ -34,8 +41,12 @@ module MainState =
           Response = "" }
 
     let performRequestInBackground (ctx : IComponentContext)
-                                   (viewState : IWritable<MainState>) =
+                                   (viewState : IWritable<MainState>)
+                                   (stopWatch : Stopwatch)
+                                   (timeState : IWritable<RequestTimer>) =
         // start the process
+        timeState.Set({ Time = TimeSpan.Zero; Running = true })
+        stopWatch.Restart()
         async {
             let state = viewState.Current
             let! response, elapsed =
@@ -44,18 +55,14 @@ module MainState =
                     state.Region
                     state.LambdaName
                     state.Request
-            //let state = viewState.Current // get the state again (does this get the latest one? Thread safe?
+            let state = viewState.Current // get the state again (does this get the latest one? Thread safe?
+            stopWatch.Stop()
+            timeState.Set({ Time = TimeSpan.Zero; Running = false })
             viewState.Set(
                 { state with
                     Response = response
                     RequestTime = Some elapsed})
         } |> Async.Start
-
-        // TODO: We want to have a visible timer during the request
-        // start the timer...
-        // * how do we update it with the correct state though
-        // * how do we remove it after the request finishes
-
 
 module Main =
 
@@ -63,6 +70,31 @@ module Main =
         Component(fun ctx ->
             let profileOptions = AWS.loadProfiles ()
             let state = ctx.useState (MainState.initial (List.head profileOptions))
+
+            let time = { Time = TimeSpan.Zero; Running = false }
+            let timeState = ctx.useState (time)
+
+            let stopWatch = Stopwatch.StartNew()
+            stopWatch.Reset ()
+
+            ctx.useEffect (
+                handler = (fun _ ->
+                    timeState.Set time
+                ),
+                triggers = [ EffectTrigger.AfterChange state ]
+            )
+
+            let timer = ctx.useState (
+                initialValue = (
+                    let timer = new Timer(Interval = 50, AutoReset = false)
+                    timer.Elapsed.Add (fun _ ->
+                        timeState.Set { timeState.Current with Time = stopWatch.Elapsed }
+                    )
+                    timer
+                ),
+                renderOnChange = false
+            )
+            timer.Current.Start()
 
             DockPanel.create [
                 DockPanel.children [
@@ -171,7 +203,7 @@ module Main =
                                 Button.fontWeight FontWeight.Bold
                                 Button.content "Send"
                                 Button.onClick (fun _ ->
-                                    MainState.performRequestInBackground ctx state )
+                                    MainState.performRequestInBackground ctx state stopWatch timeState)
                             ]
                             TextBox.create [
                                 TextBox.name "LambdaInput"
@@ -219,13 +251,34 @@ module Main =
                                 DockPanel.row 2
                                 DockPanel.minHeight 100
                                 DockPanel.children [
-                                    TextBlock.create [
-                                        TextBlock.margin (Thickness(10))
-                                        TextBlock.verticalAlignment VerticalAlignment.Top
-                                        TextBlock.textAlignment TextAlignment.Right
-                                        TextBlock.dock Dock.Left
-                                        TextBlock.width 70
-                                        TextBlock.text "Response:"
+                                    DockPanel.create [
+                                        DockPanel.dock Dock.Left
+                                        DockPanel.children [
+                                            TextBlock.create [
+                                                TextBlock.margin (Thickness(10))
+                                                TextBlock.verticalAlignment VerticalAlignment.Top
+                                                TextBlock.textAlignment TextAlignment.Right
+                                                TextBlock.dock Dock.Top
+                                                TextBlock.width 70
+                                                TextBlock.text "Response:"
+                                            ]
+                                            TextBlock.create [
+                                                TextBlock.margin (10,0,10,0)
+                                                TextBlock.verticalAlignment VerticalAlignment.Top
+                                                TextBlock.textAlignment TextAlignment.Right
+                                                TextBlock.dock Dock.Top
+                                                TextBlock.width 70
+                                                TextBlock.fontStyle FontStyle.Italic
+                                                TextBlock.fontSize 11
+                                                TextBlock.text (
+                                                    if timeState.Current.Running
+                                                    then $"...{floor timeState.Current.Time.TotalMilliseconds}"
+                                                    else
+                                                        match state.Current.RequestTime with
+                                                        | Some elapsed -> $"took {floor elapsed.TotalMilliseconds}ms"
+                                                        | None -> "Not running")
+                                            ]
+                                        ]
                                     ]
                                     TextBox.create [
                                         TextBox.margin (Thickness(10))
@@ -237,32 +290,6 @@ module Main =
                             ]
                         ]
                     ]
-                    //DockPanel.create [
-                    //    DockPanel.dock Dock.Bottom
-                    //    DockPanel.children [
-                    //        Button.create [
-                    //            Button.dock Dock.Bottom
-                    //            Button.onClick (fun _ -> state.Set(state.Current - 1))
-                    //            Button.content "-"
-                    //            Button.horizontalAlignment HorizontalAlignment.Stretch
-                    //            Button.horizontalContentAlignment HorizontalAlignment.Center
-                    //        ]
-                    //        Button.create [
-                    //            Button.dock Dock.Bottom
-                    //            Button.onClick (fun _ -> state.Set(state.Current + 1))
-                    //            Button.content "+"
-                    //            Button.horizontalAlignment HorizontalAlignment.Stretch
-                    //            Button.horizontalContentAlignment HorizontalAlignment.Center
-                    //        ]
-                    //        TextBlock.create [
-                    //            TextBlock.dock Dock.Top
-                    //            TextBlock.fontSize 48.0
-                    //            TextBlock.verticalAlignment VerticalAlignment.Center
-                    //            TextBlock.horizontalAlignment HorizontalAlignment.Center
-                    //            TextBlock.text (string state.Current)
-                    //        ]
-                    //    ]
-                    //]
                 ]
             ]
         )
