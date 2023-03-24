@@ -1,5 +1,6 @@
 namespace Direktiv.Program
 
+open System
 open Avalonia
 open Avalonia.Controls.ApplicationLifetimes
 open Avalonia.Media
@@ -20,6 +21,7 @@ type MainState =
       Region : AwsRegion
       LambdaName : string
       Request : string
+      RequestTime : TimeSpan option
       Response : string }
 
 module MainState =
@@ -28,7 +30,32 @@ module MainState =
           Region = AwsRegion.fromRegionEndpoint profile.Region
           LambdaName = ""
           Request = ""
+          RequestTime = None
           Response = "" }
+
+    let performRequestInBackground (ctx : IComponentContext)
+                                   (viewState : IWritable<MainState>) =
+        // start the process
+        async {
+            let state = viewState.Current
+            let! response, elapsed =
+                AWS.invoke
+                    state.AwsProfile.Name
+                    state.Region
+                    state.LambdaName
+                    state.Request
+            //let state = viewState.Current // get the state again (does this get the latest one? Thread safe?
+            viewState.Set(
+                { state with
+                    Response = response
+                    RequestTime = Some elapsed})
+        } |> Async.Start
+
+        // TODO: We want to have a visible timer during the request
+        // start the timer...
+        // * how do we update it with the correct state though
+        // * how do we remove it after the request finishes
+
 
 module Main =
 
@@ -144,17 +171,7 @@ module Main =
                                 Button.fontWeight FontWeight.Bold
                                 Button.content "Send"
                                 Button.onClick (fun _ ->
-                                    let x = state.Current
-                                    async {
-                                        let! response =
-                                            AWS.invoke
-                                                x.AwsProfile.Name
-                                                x.Region
-                                                x.LambdaName
-                                                x.Request
-                                        state.Set({ state.Current with Response = response})
-                                    } |> Async.Start
-                                    ())
+                                    MainState.performRequestInBackground ctx state )
                             ]
                             TextBox.create [
                                 TextBox.name "LambdaInput"
